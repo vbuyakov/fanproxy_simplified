@@ -1,0 +1,25 @@
+{
+  "name": "fanproxy_simplified",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vbuyakov/fanproxy_simplified.git"
+  },
+  "author": "Viktor Bu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vbuyakov/fanproxy_simplified/issues"
+  },
+  "homepage": "https://github.com/vbuyakov/fanproxy_simplified#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-cron": "^2.0.3",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5"
+  }
+}
