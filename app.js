@@ -9,6 +9,7 @@ const cron = require('node-cron')
 
 let systemStatus = 0; // Total system status 
 let fanStatus = 0; // Fan status
+let currentTemperature = null; //Curent temperature from sensor
 
 app.get('/', (req, res) => {
     let name = req.query.name;
@@ -22,7 +23,7 @@ app.get('/', (req, res) => {
 app.get('/on', (req, res) => {
     systemStatus = 1;
     console.log('Bridge ask to ON the system');
-    notifyBridge(systemStatus);
+    notifyBridge(conf.notifications.fan_url, 'On', systemStatus);
     if (fanStatus === 1) {
         setDeviceStatus(1);
     }
@@ -32,7 +33,7 @@ app.get('/on', (req, res) => {
 app.get('/off', (req, res) => {
     systemStatus = 0;
     console.log('Bridge ask to OFF he system');
-    notifyBridge(systemStatus);
+    notifyBridge(conf.notifications.fan_url, 'On', systemStatus);
     if (fanStatus === 1) {
         setDeviceStatus(0);
     }
@@ -44,25 +45,67 @@ app.get('/status', (req, res) => {
     res.send(systemStatus.toString(10))
 })
 
-app.listen(conf.port, () => console.log(`Example app listening on port ${conf.port}!`))
+app.get('/temperature', (req, res) => {
+    getTemperature()
+    if(currentTemperature) {
+        res.send(currentTemperature.toString(10));
+    } else {
+        res.status(500).send('temperature not ready');
+    }
+})
+
+app.get('/shutter', (req, res) => {
+    let angle = parseInt(req.query.angle);
+    console.log('vDBG','angle', angle);
+    if(!isNaN(angle)) {
+        setShutter(angle)
+    } 
+    res.status(201).send();
+})
 
 ////
-cron.schedule('* * * * *', () => {
-    let date =  Date();
-    console.log(date.toString(), 'running a task every minute');
-    startFan();
-});
+function scheduleFan(fromH, toH, startPeriod, workingPeriod) {
+    return cron.schedule(`*/${startPeriod} ${fromH}-${toH - 1} * * *`, () => {
+        let date =  Date()
+        startFan(workingPeriod)
+        console.log(date.toString(), `running a task every ${startPeriod} m for ${workingPeriod} from ${fromH} to ${toH}`);
+    });
+}
 
-function startFan() {
+function scheduleTemperatureUpdate(minutes) {
+    getTemperature()
+    return cron.schedule(`*/${minutes} * * * *`, () => {
+        getTemperature()
+    });
+}
+
+/**
+ * 
+ * @param {integer} workingPeriod - working period in Minutes
+ */
+function startFan(workingPeriod) {
+    console.log('vDBG', 'Start Fan');
+    
     fanStatus = 1;
     if (systemStatus === 1) {
-        setDeviceStatus(1);
+        setDeviceStatus(1)
     }
+    setTimeout(function() {
+        stopFan();
+    }, workingPeriod*60000)
 }
 
 function stopFan() {
-    fanStatus = 0;
-    setDeviceStatus(0);
+    console.log('vDBG', 'Stop fan');
+    
+    fanStatus = 0
+    setDeviceStatus(0)
+}
+
+function setShutter(angle) {
+    if(angle < 0 || angle > 90) return
+    request.get(conf.shutter_url + angle.toString(10))
+    .then(res => console.log('vDBG', `Shutter was rotated to ${angle}`))
 }
 
 function setDeviceStatus(status) {
@@ -73,16 +116,27 @@ function setDeviceStatus(status) {
     }
 }
 
-function notifyBridge(value) {
+function notifyBridge(uri, characteristic, value) {
     request.post(
-        conf.bridge_notification_url, {
+        uri, {
         json: {
-            characteristic: 'On',
+            characteristic: characteristic,
             value: value.toString(10)
         }
     }
     ).then(() => {
-        console.log('vDBG', 'Notification has beed sent');
-
+        console.log('vDBG', `Notification to ${uri} with ${value} has beed sent`);
     })
 }  
+
+function getTemperature() {
+    request.get(conf.temperature_url).then((res) => {
+        console.log('vDBG', 'temperature', res);
+        currentTemperature = res;
+        notifyBridge(conf.notifications.temperature_url, 'CurrentTemperature', res);
+    });
+}
+
+scheduleFan(14,15,2,1)
+scheduleTemperatureUpdate(2)
+app.listen(conf.port, () => console.log(`Example app listening on port ${conf.port}!`))
