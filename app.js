@@ -62,7 +62,6 @@ app.get('/temperature', (req, res) => {
 app.get('/shutter', (req, res) => {
     let angle = parseInt(req.query.angle)
     let shutter = parseInt(req.query.shutter) || 1
-    console.log('vDBG', 'angle', angle);
     if (!isNaN(angle)) {
         setShutter(shutter, angle)
     }
@@ -72,9 +71,8 @@ app.get('/shutter', (req, res) => {
 ////
 function scheduleFan(fromH, toH, startPeriod, workingPeriod) {
     return cron.schedule(`*/${startPeriod} ${fromH}-${toH - 1} * * *`, () => {
-        let date = Date()
         startFan(workingPeriod)
-        console.log(date.toString(), `running a task every ${startPeriod} m for ${workingPeriod} from ${fromH} to ${toH}`);
+        console.log(Date().toString(), `running a task every ${startPeriod} m for ${workingPeriod} from ${fromH} to ${toH}`);
     });
 }
 
@@ -90,20 +88,17 @@ function scheduleTemperatureUpdate(minutes) {
  * @param {integer} workingPeriod - working period in Minutes
  */
 function startFan(workingPeriod) {
-    console.log('vDBG', 'Start Fan');
-
     fanStatus = 1;
     if (systemStatus === 1) {
         setDeviceStatus(1)
     }
     setTimeout(function () {
         stopFan();
+        console.log(Date().toString(), `Stop Fan after ${workingPeriod} worked`);
     }, workingPeriod * 60000)
 }
 
 function stopFan() {
-    console.log('vDBG', 'Stop fan');
-
     fanStatus = 0
     setDeviceStatus(0)
 }
@@ -116,15 +111,14 @@ function setShutter(shutter, angle) {
             angle: angle.toString(10)
         })
     request.get(conf.shutter_url + angle.toString(10))
-        .then(res => console.log('vDBG', `Shutter was rotated to ${angle}`))
+        .then(res => console.info('vDBG', `Shutter was rotated to ${angle}`))
 }
 
 function setDeviceStatus(status) {
     let actionUrl = status ? conf.fan_on_url : conf.fan_off_url;
-     console.log('vDBG', 'actionUrl', actionUrl);
     if (actionUrl !== '') {
         request.get(actionUrl).then(() => { })
-            .catch((err) => console.log('vDBG', 'Send to device err:', err));
+            .catch((err) => console.error('vDBG', 'Send to device err:', err));
     }
 }
 
@@ -137,13 +131,11 @@ function notifyBridge(uri, characteristic, value) {
         }
     }
     ).then(() => {
-        console.log('vDBG', `Notification to ${uri} with ${value} has beed sent`);
     })
 }
 
 function getTemperature() {
     request.get(conf.temperature_url).then((res) => {
-        console.log('vDBG', 'temperature', res);
         currentTemperature = res;
         notifyBridge(conf.notifications.temperature_url, 'CurrentTemperature', res);
     });
@@ -171,7 +163,7 @@ async function saveState(state) {
         let filehandle = await fs.open('state.json', 'w')
         await filehandle.writeFile(JSON.stringify(state))
     } catch(err) {
-        console.log('vDBG', 'Store state err: ', err)
+        console.error('vDBG', 'Store state err: ', err)
     } finally {
         if (filehandle !== undefined) {
             await filehandle.close()
