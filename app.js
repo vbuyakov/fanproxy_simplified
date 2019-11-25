@@ -144,33 +144,23 @@ function getTemperature() {
 }
 
 async function init() {
-    let filehandle
-    try {
-        let filehandle = await fsOpen.open('state.json', 'r')
-        let state = JSON.parse(await filehandle.readFile())
-        systemStatus = state.systemStatus || 0
-    } catch(err) {
-    //
-    }
-    finally {
-        if (filehandle !== undefined) {
-            await filehandle.close()
+    fs.readFile('state.json', (err, data) => {
+        if (!err) {
+            let state = JSON.parse(data)
+            systemStatus = state.systemStatus || 0
         }
-    }
+        if(err) {
+            console.error('vDBG', 'Load state err: ', err)
+        }
+      });
 }
 
 async function saveState(state) {
-    let filehandle
-    try {
-        let filehandle = await fsOpen.open('state.json', 'w')
-        await filehandle.writeFile(JSON.stringify(state))
-    } catch(err) {
-        console.error('vDBG', 'Store state err: ', err)
-    } finally {
-        if (filehandle !== undefined) {
-            await filehandle.close()
+    fs.writeFile('state.json', JSON.stringify(state), (err) => {
+        if (err) {
+            console.error('vDBG', 'Store state err: ', err)
         }
-    }
+      });
 }
 
 init().then(()=>{});
