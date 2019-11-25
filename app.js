@@ -4,7 +4,9 @@ const app = express()
 const fillTemplate = require('es6-dynamic-template')
 
 const request = require('request-promise')
-const fs =  require('fs').promises
+const fs =  require('fs')
+const util = require('util');
+const fsOpen = util.promisify(fs.open)
 
 
 
@@ -144,7 +146,7 @@ function getTemperature() {
 async function init() {
     let filehandle
     try {
-        let filehandle = await fs.open('state.json', 'r')
+        let filehandle = await fsOpen.open('state.json', 'r')
         let state = JSON.parse(await filehandle.readFile())
         systemStatus = state.systemStatus || 0
     } catch(err) {
@@ -160,7 +162,7 @@ async function init() {
 async function saveState(state) {
     let filehandle
     try {
-        let filehandle = await fs.open('state.json', 'w')
+        let filehandle = await fsOpen.open('state.json', 'w')
         await filehandle.writeFile(JSON.stringify(state))
     } catch(err) {
         console.error('vDBG', 'Store state err: ', err)
