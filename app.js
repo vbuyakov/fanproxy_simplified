@@ -72,7 +72,8 @@ app.get('/shutter', (req, res) => {
 
 ////
 function scheduleFan(fromH, toH, startPeriod, workingPeriod) {
-    return cron.schedule(`*/${startPeriod} ${fromH}-${toH - 1} * * *`, () => {
+	toH = (toH == 0) ? 23 : toH - 1	
+    return cron.schedule(`*/${startPeriod} ${fromH}-${toH} * * *`, () => {
         startFan(workingPeriod)
         console.log(Date().toString(), `running a task every ${startPeriod} m for ${workingPeriod} from ${fromH} to ${toH}`);
     });
@@ -168,9 +169,9 @@ init().then(()=>{});
 scheduleFan(0, 1, 40, 5)
 scheduleFan(1, 6, 30, 5)
 scheduleFan(6, 9, 20, 5)
-scheduleFan(9, 16, 20, 10)
-scheduleFan(16, 19, 30, 9)
-scheduleFan(19, 0, 40, 10)
+scheduleFan(9, 17, 20, 10)
+scheduleFan(17, 19, 30, 10)
+scheduleFan(19, 0, 30,8)
 scheduleTemperatureUpdate(2)
 
 
