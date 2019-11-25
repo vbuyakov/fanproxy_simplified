@@ -4,6 +4,8 @@ const app = express()
 const fillTemplate = require('es6-dynamic-template')
 
 const request = require('request-promise')
+const fs =  require('fs').promises
+
 
 
 const cron = require('node-cron')
@@ -25,6 +27,7 @@ app.get('/on', (req, res) => {
     systemStatus = 1;
     console.log('Bridge ask to ON the system');
     notifyBridge(conf.notifications.fan_url, 'On', systemStatus);
+    saveState({systemStatus})
     if (fanStatus === 1) {
         setDeviceStatus(1);
     }
@@ -35,6 +38,7 @@ app.get('/off', (req, res) => {
     systemStatus = 0;
     console.log('Bridge ask to OFF he system');
     notifyBridge(conf.notifications.fan_url, 'On', systemStatus);
+    saveState({systemStatus})
     if (fanStatus === 1) {
         setDeviceStatus(0);
     }
@@ -117,6 +121,7 @@ function setShutter(shutter, angle) {
 
 function setDeviceStatus(status) {
     let actionUrl = status ? conf.fan_on_url : conf.fan_off_url;
+     console.log('vDBG', 'actionUrl', actionUrl);
     if (actionUrl !== '') {
         request.get(actionUrl).then(() => { })
             .catch((err) => console.log('vDBG', 'Send to device err:', err));
@@ -144,6 +149,46 @@ function getTemperature() {
     });
 }
 
-scheduleFan(14, 15, 2, 1)
+async function init() {
+    let filehandle
+    try {
+        let filehandle = await fs.open('state.json', 'r')
+        let state = JSON.parse(await filehandle.readFile())
+        systemStatus = state.systemStatus || 0
+    } catch(err) {
+    //
+    }
+    finally {
+        if (filehandle !== undefined) {
+            await filehandle.close()
+        }
+    }
+}
+
+async function saveState(state) {
+    let filehandle
+    try {
+        let filehandle = await fs.open('state.json', 'w')
+        await filehandle.writeFile(JSON.stringify(state))
+    } catch(err) {
+        console.log('vDBG', 'Store state err: ', err)
+    } finally {
+        if (filehandle !== undefined) {
+            await filehandle.close()
+        }
+    }
+}
+
+init().then(()=>{});
+
+scheduleFan(0, 1, 40, 5)
+scheduleFan(1, 6, 30, 5)
+scheduleFan(6, 9, 20, 5)
+scheduleFan(9, 16, 20, 10)
+scheduleFan(16, 19, 30, 9)
+scheduleFan(19, 0, 40, 10)
 scheduleTemperatureUpdate(2)
+
+
+
 app.listen(conf.port, () => console.log(`Example app listening on port ${conf.port}!`))
