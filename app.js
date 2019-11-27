@@ -166,10 +166,9 @@ async function saveState(state) {
 
 init().then(()=>{});
 
-scheduleFan(0, 1, 40, 5)
-scheduleFan(1, 6, 30, 5)
-scheduleFan(6, 9, 20, 5)
-scheduleFan(9, 17, 20, 10)
+scheduleFan(0, 2, 30, 7)
+scheduleFan(2, 7, 15, 5)
+scheduleFan(7, 17, 20, 10)
 scheduleFan(17, 19, 30, 10)
 scheduleFan(19, 0, 30,8)
 scheduleTemperatureUpdate(2)
