@@ -126,6 +126,9 @@ function setDeviceStatus(status) {
 }
 
 function notifyBridge(uri, characteristic, value) {
+    if (!conf.notifications.enabled) {
+        return;
+    }
     request.post(
         uri, {
         json: {
@@ -166,11 +169,9 @@ async function saveState(state) {
 
 init().then(()=>{});
 
-scheduleFan(0, 2, 30, 7)
-scheduleFan(2, 7, 15, 5)
-scheduleFan(7, 17, 20, 10)
-scheduleFan(17, 19, 30, 10)
-scheduleFan(19, 0, 30,8)
+scheduleFan(0, 9, 25, 8)
+scheduleFan(9, 22,25,3)
+scheduleFan(22, 0, 20,18)
 scheduleTemperatureUpdate(2)
 
 

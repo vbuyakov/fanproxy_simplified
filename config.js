@@ -1,6 +1,7 @@
 module.exports = {
     port: 8889,
     notifications: {
+        enabled: false,
         fan_url: 'http://192.168.88.229:8085/cabinet-fan-1?password=zzz',
         temperature_url: 'http://192.168.88.229:8085/outdor-temp?password=zzz',
     },
