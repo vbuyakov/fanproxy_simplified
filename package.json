@@ -19,7 +19,7 @@
   "homepage": "https://github.com/vbuyakov/fanproxy_simplified#readme",
   "dependencies": {
     "es6-dynamic-template": "^2.0.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "node-cron": "^2.0.3",
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
